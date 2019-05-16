@@ -2,7 +2,9 @@
 title: "Credit Approval Model"
 author: "Raj Solanki"
 date: "5/15/2019"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 **Intro**
@@ -18,8 +20,8 @@ output: html_document
 
 With these massive changes coming into the payment space, more consumers are applying for credit cards. This means that this places immense pressure on credit card companies to look into automated strategies for approval to make decisions within a split second. Later in this project, we will be going over how **K-NN** and **Decision Trees** could be applied to this real life problem.
 
-1. **Business Problem:** We want to be able to accuartely predict whether or not an applicant should be approved or not.
-2. **Data Preparation** The data has already been gathered and put together in a table format. Here we will load into R and take a look some general attributes and exploratory work related to the dataset before we start building predictive models.
+1. **Business Problem:** We want to be able to accurately predict whether or not an applicant should be approved or not.
+2. **Data Preparation** The data has already been gathered and put together in a table format. Here we will load into R and take a look some general attributes and exploratory work related to the data set before we start building predictive models.
 
  
 ```{r}
@@ -34,12 +36,12 @@ data<-read.csv("C:/Users/Raji Roy/Desktop/Udemy/Credit Approval Model/crx.txt",h
 
 
 ```{r}
-paste0("The shape of the dataset is (",nrow(data),",",ncol(data),")"  )
+paste0("The shape of the data set is (",nrow(data),",",ncol(data),")"  )
 ```
 
  
 
-The columns are anonymized since this is actual applicant information. Here we rename the columns of the dataset.
+The columns are anonymized since this is actual applicant information. Here we rename the columns of the data set.
 
 ```{r}
 
@@ -55,7 +57,7 @@ summary(data)
 ```
 
  
-Now we will convert the data to the appropriate data types and recode the target variable to 0 for not approved and 1 for approved. We then use the `as.numeric` function to convert the characters to the numerical factors.
+Now we will convert the data to the appropriate data types and re code the target variable to 0 for not approved and 1 for approved. We then use the `as.numeric` function to convert the characters to the numerical factors.
 
  
 ```{r}
@@ -93,7 +95,7 @@ data$Target<-ifelse(data$Target=="+",1,0)
 
  
 
-This dataset does have missing values which were imputed beforehand. We will check for column wise just to be on the safe side. Missing values are coded as ?. We have missing values in columns V2 and V14 which are both continous, and we will impute these with the mean.
+This data set does have missing values which were imputed beforehand. We will check for column wise just to be on the safe side. Missing values are coded as ?. We have missing values in columns V2 and V14 which are both continuous, and we will impute these with the mean.
 
  
 
@@ -147,33 +149,14 @@ p
 ```
 
  
-
-**Plot 2** shows the marginal distribution of the target variable vs V4. Some values are more weighted towards approved while others are more towards rejected.
-
  
-
-```{r}
-
-p<-ggplot(data=data, aes(x=V4,y=Target)) +geom_boxplot()
-
-p<-p+ggtitle("Marginal Distribution of V4 vs Target")+
-
-   theme(plot.title = element_text(hjust =   0.5),
-
-         plot.caption = element_text(color="red",size=10))+
-
-   ylab("Count")+xlab("V4")
-
-p
-
-```
 
  
 V1, V4 - V7, and V9-V13 are all categorical.
 
-```{r}
+```{r echo=FALSE}
 
-apply(data,2,FUN = unique)
+#apply(data,2,FUN = unique)
 
 ```
 
@@ -209,11 +192,12 @@ p
 Since this is a classification problem, we are going to be using K-NN, Decision Trees, and SVMs as our choice of models for this. Later ensemble methods such as bagging and boosting will be used to see if we can get higher predictive rate using the models
 by themselves.
 
-The initial step before the models are initialized with the data for training, we will be splitting the dataset into 3 different subsets: Training, Validation, and Test sets.Training Set will be used to build the model, the validation set will be used to fine tune the model, and the test set will be the unseen data to test the model performance. The split for the 3 subsets can be at your discretion but in general a 65/10/25 split is generally used.For this project we will go with a 65/10/25 split and this is  validated this below as well.
+The initial step before the models are initialized with the data for training, we will be splitting the data set into 3 different subsets: Training, Validation, and Test sets.Training Set will be used to build the model, the validation set will be used to fine tune the model, and the test set will be the unseen data to test the model performance. The split for the 3 subsets can be at your discretion but in general a 65/10/25 split is generally used.For this project we will go with a 65/10/25 split and this is  validated this below as well.
 
  
 ```{r}
 
+set.seed(123)
 ind.train<- sort(sample(1:nrow(data),replace = FALSE, size = floor(.65*nrow(data))))
 ind.left<-setdiff(1:nrow(data),ind.train)
 ind.val<-sort(sample(ind.left,replace = FALSE, size = floor(.10*nrow(data))))
@@ -223,7 +207,7 @@ print(paste( round(length(ind.train)/nrow(data),2), round(length(ind.val)/nrow(d
 ```
 
  
-Now we will split apart the dataset into the respective subsets.
+Now we will split apart the data set into the respective subsets.
 
  
 ```{r}
@@ -238,20 +222,20 @@ test.y=data[ind.test, c("Target")]
 ```
 
  
-Train K-NN Model first as shown below, and then fine tune the model using the validation set. We will then create the confuusion matrix which shows the number of correct/wrong predicted values.
-
- 
+Train K-NN Model first as shown below, and then fine tune the model using the validation set. We will then create the confusion matrix which shows the number of correct/wrong predicted values. It appears k=7 is the best and we don't choose a low number for the clusters since that introduces a large amount of variance into the model. 
 
 ```{r}
-
 library("class")
-library("gmodels")
 
-missclass.rate=c()
+misclass.rate=c()
 
-test.pred<-knn(train.x,test.x,cl=train.y, k=5)
-tab1<-table(test.y ,test.pred)
-print(paste0("The misclassification rate on the training set is ", round((tab1[2]+tab1[3])/nrow(test.x),2)*100," %"))
+   for (i in 1:50){
+      test.pred<-knn(train.x,test.x,cl=train.y, k=i)
+      tab1<-table(test.y ,test.pred)
+      misclass.rate[i]=round((tab1[2]+tab1[3])/nrow(test.x),2)*100
+      
+   }
+which(misclass.rate==min(misclass.rate))
 ```
 
  
@@ -269,15 +253,30 @@ rpart.plot(fit1)
 
 
 
+Here the decision tree did better then the K-NN model and has a classification rate of 87%.
+
 ```{r}
-preds<-predict(fit1,test.x)
-preds<-ifelse(preds>=0.5,1,0)
-
-
-
+preds.tree<-predict(fit1,test.x)
+preds.tree<-ifelse(preds.tree>=0.5,1,0)
+tab1<-table(test.y ,preds.tree)
+print(paste0("The misclassification rate on the training set is ", round((tab1[2]+tab1[3])/nrow(test.x),2)*100,"%"))
 ```
 
 
+
+By using boosting, we were able to get a classification rate of 86%. The only issue with boosting is that the model itself 
+cannot be easily visualized since there are 5000 trees in this case whose observations are averages. Nonetheless it did pretty
+well. 
+
+
+```{r}
+library(gbm)
+boost.myData<-gbm(Target~.,data=train.new,n.trees=5000,interaction.depth=5)
+pred.boost<-predict(boost.myData,newdata=test.x,n.trees=5000,type="response")
+pred.boost<-ifelse(pred.boost>=0.5,1,0)
+tab1<-table(test.y ,pred.boost)
+print(paste0("The misclassification rate on the training set is ", round((tab1[2]+tab1[3])/nrow(test.x),2)*100,"%"))
+```
 
 
 
