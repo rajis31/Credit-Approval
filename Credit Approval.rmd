@@ -3,8 +3,8 @@ title: "Credit Approval Model"
 author: "Raj Solanki"
 date: "5/15/2019"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 **Intro**
@@ -259,12 +259,12 @@ Here the decision tree did better then the K-NN model and has a classification r
 preds.tree<-predict(fit1,test.x)
 preds.tree<-ifelse(preds.tree>=0.5,1,0)
 tab1<-table(test.y ,preds.tree)
-print(paste0("The misclassification rate on the training set is ", round((tab1[2]+tab1[3])/nrow(test.x),2)*100,"%"))
+print(paste0("The misclassification rate on the test set is ", round((tab1[2]+tab1[3])/nrow(test.x),2)*100,"%"))
 ```
 
 
 
-By using boosting, we were able to get a classification rate of 86%. The only issue with boosting is that the model itself 
+By using boosting, we were able to get a classification rate of 87%. The only issue with boosting is that the model itself 
 cannot be easily visualized since there are 5000 trees in this case whose observations are averages. Nonetheless it did pretty
 well. 
 
@@ -275,5 +275,5 @@ boost.myData<-gbm(Target~.,data=train.new,n.trees=5000,interaction.depth=5)
 pred.boost<-predict(boost.myData,newdata=test.x,n.trees=5000,type="response")
 pred.boost<-ifelse(pred.boost>=0.5,1,0)
 tab1<-table(test.y ,pred.boost)
-print(paste0("The misclassification rate on the training set is ", round((tab1[2]+tab1[3])/nrow(test.x),2)*100,"%"))
+print(paste0("The misclassification rate on the test set is ", round((tab1[2]+tab1[3])/nrow(test.x),2)*100,"%"))
 ```
